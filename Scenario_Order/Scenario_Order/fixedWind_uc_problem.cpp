@@ -114,7 +114,7 @@ void define_data(IloEnv env)//数据初始化,对全局变量进行赋值
 	}
 	reserve.close();
 	
-	output<<endl<<"Pwind:"<<endl;
+	output<<endl<<endl<<"Pwind:"<<endl;
 	ifstream windpower("wind_power.txt",ios::in);//风电计算场景
 	if(!windpower)
 	{	
@@ -268,7 +268,7 @@ int main()
 	start=clock();
 	time_t nowTime=time(0);
 	struct tm* nowTimeStruct=localtime(&nowTime);//时间统计及打印系统时间
-	output<<"系统当前时间："<<1900+nowTimeStruct->tm_year<<"."<<nowTimeStruct->tm_mon<<"."<<
+	output<<"系统当前时间："<<1900+nowTimeStruct->tm_year<<"."<<nowTimeStruct->tm_mon+1<<"."<<
 		nowTimeStruct->tm_mday<<"  "<<nowTimeStruct->tm_hour<<":"<<nowTimeStruct->tm_min<<":"
 		<<nowTimeStruct->tm_sec<<endl;
 
@@ -276,7 +276,7 @@ int main()
 	{
 		output<<">>>>>>>>>>>>>>>>>>>>>>>>>数据区<<<<<<<<<<<<<<<<<<<<"<<endl;
 		define_data(env);//首先初始化全局变量
-		output<<">>>>>>>>>>>>>>>>>>>>>>>>>/数据区<<<<<<<<<<<<<<<<<<<"<<endl;
+		output<<">>>>>>>>>>>>>>>>>>>>>>>>>/数据区<<<<<<<<<<<<<<<<<<<"<<endl<<endl;
 /******************************************主问题目标函数*****************************************************/
 		IloNumExpr Cost(env);
 		

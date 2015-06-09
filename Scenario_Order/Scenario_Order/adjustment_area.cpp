@@ -1,6 +1,6 @@
 /*              不规则概率分布风电机组组合
  *1）此程序用于求解给定机组组合下的风电可接受波动区间问题
- *
+ *2）每个时段都应有其波动区间
  */
 #include<ilcplex/ilocplex.h>
 #include<fstream>
@@ -61,12 +61,14 @@ void define_data(IloEnv env)//数据初始化,对全局变量进行赋值
 	}
 	unit_information.close();
 	
+	output<<endl<<endl<<"Limitation of Unit Adjustment:"<<endl;
 	for(IloInt i=0;i<NG;++i)
 	{
-		detaa[i]=Unit[i][5]/20;
+		detaa[i]=Unit[i][5]/24;//相当于允许调节时间为150s
+		output<<detaa[i]<<"   ";
 	}
 	
-	output<<endl<<"Info_Branch:"<<endl;
+	output<<endl<<endl<<"Info_Branch:"<<endl;
 	ifstream BFile("Brach_File.txt",ios::in);//读取风电支路信息:起点，终点，电阻，电抗以及潮流上限
 	if(!BFile)
 	{	
@@ -203,21 +205,27 @@ int main()
 	double totaltime;
 	start=clock();
 	time_t nowTime=time(0);
-	struct tm* nowTimeStruct=localtime(&nowTime);
-	output<<"系统当前时间："<<1900+nowTimeStruct->tm_year<<"."<<nowTimeStruct->tm_mon<<"."<<
+	struct tm* nowTimeStruct=localtime(&nowTime);//打印系统时间
+	output<<"系统当前时间："<<1900+nowTimeStruct->tm_year<<"."<<nowTimeStruct->tm_mon+1<<"."<<
 		nowTimeStruct->tm_mday<<"  "<<nowTimeStruct->tm_hour<<":"<<nowTimeStruct->tm_min<<":"<<nowTimeStruct->tm_sec<<endl;
 	
 	try
 	{
-		define_data(env);//首先初始化全局变量		
+		output<<">>>>>>>>>>>>>>>>>>>>>>>>>数据区<<<<<<<<<<<<<<<<<<<<"<<endl;
+		define_data(env);//首先初始化全局变量
+		output<<">>>>>>>>>>>>>>>>>>>>>>>>>/数据区<<<<<<<<<<<<<<<<<<<"<<endl<<endl;
+		
 		IloInvert(env,B0,B0l,Node-1);//求逆矩阵
 		
-		IloNumExpr Cost(env);//目标函数
+		//在此创建两种形式的目标函数
+		IloNumExpr Cost(env);//目标函数			
 		for(IloInt w=0;w<NW;++w)
 		{
 			Cost+=detaPw[w];
-		}		
-		Master_Model.add(IloMinimize(env,Cost));
+		}
+		IloObjective min(env,Cost,IloObjective::Sense::Minimize,"min");
+		IloObjective max(env,Cost,IloObjective::Sense::Maximize,"max");	
+		Master_Model.add(min);
 		// Master_Model.add(IloMaximize(env,Cost));//目标函数二选一
 		Cost.end();
 
@@ -301,19 +309,30 @@ int main()
 		
 /************************************************************输出显示过程**************************************************/
 		
-		output<<endl<<"Min/Max:"<<Master_Cplex.getObjValue()<<endl;
+		output<<endl<<"Min:"<<Master_Cplex.getObjValue()<<endl;
 		
-		output<<endl<<"常规机组出力调整量:"<<endl;
-		for(IloInt i=0;i<NG;++i)
+		Master_Model.remove(min);
+		Master_Model.add(max);
+		Master_Cplex.extract(Master_Model);
+		Master_Cplex.solve();
+		if (Master_Cplex.getStatus() == IloAlgorithm::Infeasible)//输出结果
 		{
-			output<<Master_Cplex.getValue(detaP[i])<<"  ";
+			output<<"Master Problem Have No Solution"<<endl;
+			goto lable2;
 		}
-		output<<endl<<"风电机组出力调整量:"<<endl;
-		for(IloInt i=0;i<NW;++i)
-		{
-			output<<Master_Cplex.getValue(detaPw[i])<<"  ";
-		}
-		output<<endl;
+		output<<endl<<"Max:"<<Master_Cplex.getObjValue()<<endl;
+		
+		// output<<endl<<"常规机组出力调整量:"<<endl;
+		// for(IloInt i=0;i<NG;++i)
+		// {
+			// output<<Master_Cplex.getValue(detaP[i])<<"  ";
+		// }
+		// output<<endl<<"风电机组出力调整量:"<<endl;
+		// for(IloInt i=0;i<NW;++i)
+		// {
+			// output<<Master_Cplex.getValue(detaPw[i])<<"  ";
+		// }
+		// output<<endl;
 		
 		lable2:
 		Master_Model.end();
