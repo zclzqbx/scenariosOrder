@@ -2,6 +2,9 @@
  *1）此程序用于求解给定机组组合下的风电可接受波动区间问题
  *2）每个时段都应有其波动区间
  */
+//朱传林-20150910
+
+
 #include<ilcplex/ilocplex.h>
 #include<fstream>
 #include<time.h>

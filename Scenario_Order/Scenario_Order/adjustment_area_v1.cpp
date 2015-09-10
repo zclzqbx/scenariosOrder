@@ -14,7 +14,6 @@ const IloInt NW=1;//风电场个数
 const IloInt Node=118;//结点
 const IloInt Branch=186;//支路
 
-
 IloEnv env;//运行环境，运行结束之后要关闭
 IloModel Master_Model(env,"Master_Model");//生成模型
 IloCplex Master_Cplex(Master_Model);//创建CPLEX环境
@@ -350,7 +349,7 @@ int main()
 	
 	finish=clock();
 	totaltime=(double)(finish-start)/CLOCKS_PER_SEC;
-	// output<<"totaltime: "<<totaltime<<"s"<<endl<<endl;
+	output<<"totaltime: "<<totaltime<<"s"<<endl<<endl;
 	output.close();	
 	return 0;
 }
